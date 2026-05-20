@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+<title>ChoreHero</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script>
+tailwind.config = {
+  darkMode:"class",
+  theme:{extend:{
+    colors:{"surface-tint":"#4d44e3","background":"#f8f9ff","tertiary":"#571ac0","error-container":"#ffdad6","surface-container-high":"#dce9ff","primary-fixed":"#e2dfff","on-tertiary-container":"#e3d5ff","error":"#ba1a1a","inverse-on-surface":"#eaf1ff","tertiary-fixed-dim":"#d0bcff","surface":"#f8f9ff","on-surface":"#0b1c30","on-background":"#0b1c30","surface-container-lowest":"#ffffff","on-primary-fixed":"#0f0069","on-primary":"#ffffff","secondary":"#9d4300","on-primary-container":"#dad7ff","primary-fixed-dim":"#c3c0ff","surface-container-highest":"#d3e4fe","surface-dim":"#cbdbf5","inverse-primary":"#c3c0ff","inverse-surface":"#213145","tertiary-fixed":"#e9ddff","surface-bright":"#f8f9ff","on-secondary-container":"#5c2400","primary-container":"#4f46e5","secondary-fixed-dim":"#ffb690","on-surface-variant":"#464555","on-secondary":"#ffffff","surface-variant":"#d3e4fe","on-tertiary":"#ffffff","outline":"#777587","secondary-fixed":"#ffdbca","outline-variant":"#c7c4d8","tertiary-container":"#6f3dd9","secondary-container":"#fd761a","on-error":"#ffffff","primary":"#3525cd","surface-container":"#e5eeff","surface-container-low":"#eff4ff","on-primary-fixed-variant":"#3323cc"},
+    borderRadius:{"DEFAULT":"0.25rem","lg":"0.5rem","xl":"1.5rem","full":"9999px"},
+    spacing:{"margin-desktop":"40px","stack-lg":"48px","stack-md":"24px","stack-sm":"12px","base":"8px","margin-mobile":"20px","gutter":"16px"},
+    fontFamily:{"sans":["Plus Jakarta Sans","sans-serif"]},
+    fontSize:{"display-lg":["48px",{lineHeight:"1.1",letterSpacing:"-0.02em",fontWeight:"800"}],"label-md":["14px",{lineHeight:"1.4",letterSpacing:"0.05em",fontWeight:"600"}],"body-lg":["18px",{lineHeight:"1.6",fontWeight:"500"}],"headline-lg-mobile":["28px",{lineHeight:"1.2",fontWeight:"700"}],"headline-md":["24px",{lineHeight:"1.3",fontWeight:"700"}],"headline-lg":["32px",{lineHeight:"1.2",fontWeight:"700"}],"body-md":["16px",{lineHeight:"1.6",fontWeight:"400"}]}
+  }}
+}
+</script>
+<style>
+.glass-card{background:rgba(255,255,255,.6);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1.5px solid rgba(255,255,255,.8);box-shadow:0 10px 30px rgba(0,0,0,.04)}
+.material-symbols-outlined{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;vertical-align:middle}
+.fill-icon{font-variation-settings:'FILL' 1,'wght' 400,'GRAD' 0,'opsz' 24}
+@keyframes pop{0%{transform:scale(.5);opacity:0}60%{transform:scale(1.2)}100%{transform:scale(1);opacity:1}}
+@keyframes fadein{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes floating{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+@keyframes shine{0%{background-position:-200% -200%}100%{background-position:200% 200%}}
+.pop{animation:pop .4s cubic-bezier(.34,1.56,.64,1) forwards}
+.fadein{animation:fadein .3s ease forwards}
+.floating{animation:floating 3s ease-in-out infinite}
+.achievement-glint{background:linear-gradient(135deg,rgba(255,255,255,0) 0%,rgba(255,255,255,.4) 50%,rgba(255,255,255,0) 100%);background-size:200% 200%;animation:shine 3s infinite}
+.page{display:none}.page.active{display:block}
+.nav-btn{display:flex;flex-direction:column;align-items:center;gap:2px;padding:7px 0;cursor:pointer;transition:all .2s;color:#464555;font-size:10px;font-weight:700;border:none;background:none;font-family:inherit;flex:1}
+.nav-btn.active{background:#e5eeff;border-radius:14px;color:#3525cd}
+input,select{font-family:inherit;background:rgba(79,70,229,.05);border:1.5px solid #c7c4d8;border-radius:12px;padding:11px 14px;font-size:14px;color:#0b1c30;outline:none;transition:box-shadow .2s;width:100%}
+input:focus,select:focus{box-shadow:0 0 0 3px rgba(79,70,229,.2);border-color:#4f46e5}
+.modal-ov{position:fixed;inset:0;background:rgba(15,23,42,.5);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;z-index:200;padding:16px}
+.modal-box{background:#fff;border-radius:28px;padding:28px;width:100%;max-width:420px;max-height:90vh;overflow-y:auto;box-shadow:0 32px 80px rgba(0,0,0,.15)}
+.tag{padding:2px 8px;border-radius:9999px;font-size:11px;font-weight:700}
+.pb{height:9px;border-radius:9999px;background:#e5eeff;overflow:hidden}
+.pf{height:100%;border-radius:9999px;background:linear-gradient(90deg,#4f46e5,#a78bfa);transition:width .8s cubic-bezier(.34,1.56,.64,1)}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-thumb{background:#c7c4d8;border-radius:2px}
+.cat-Kitchen{color:#ef4444;background:#ef444420}.cat-Bedroom{color:#6366f1;background:#6366f120}.cat-Garden{color:#22c55e;background:#22c55e20}.cat-Living-Room{color:#f59e0b;background:#f59e0b20}.cat-Bathroom{color:#06b6d4;background:#06b6d420}.cat-Organization{color:#8b5cf6;background:#8b5cf620}
+.diff-Easy{color:#22c55e;background:#22c55e20}.diff-Medium{color:#f59e0b;background:#f59e0b20}.diff-Hard{color:#ef4444;background:#ef444420}
+.spin-anim{transition:transform 2.1s cubic-bezier(.17,.67,.12,1)}
+@keyframes confetti-fall{from{top:-20px;opacity:1}to{top:100vh;opacity:0}}
+.podium-1{height:160px}.podium-2{height:120px}.podium-3{height:90px}
+</style>
+</head>
+<body class="bg-background text-on-surface font-sans min-h-screen pb-24">
+
+<!-- HEADER -->
+<header class="bg-surface/60 backdrop-blur-xl sticky top-0 z-50 border-b border-surface-variant/20 shadow-sm flex justify-between items-center w-full px-5 py-4">
+  <div class="flex items-center gap-2">
+    <span class="material-symbols-outlined text-primary text-3xl">family_restroom</span>
+    <h1 class="text-headline-md font-extrabold text-primary tracking-tight">ChoreHero</h1>
+  </div>
+  <button onclick="handleModeToggle()" id="mode-btn" class="px-4 py-2 rounded-full font-bold text-sm transition-all bg-surface-container text-on-surface-variant hover:bg-primary-container hover:text-on-primary-container">
+    👦 Kid Mode
+  </button>
+</header>
+
+<!-- PAGES -->
+<main>
+<!-- ===== DASHBOARD (parent) ===== -->
+<div id="page-dashboard" class="page max-w-4xl mx-auto px-5 py-6 fadein">
+  <h2 class="text-headline-lg font-bold mb-1">Parent Dashboard</h2>
+  <p class="text-on-surface-variant mb-6">Manage your household chore system</p>
+
+  <!-- Stats -->
+  <div class="grid grid-cols-3 gap-3 mb-5" id="dash-stats"></div>
+
+  <!-- Children Card -->
+  <div class="glass-card rounded-[24px] p-6 mb-4">
+    <div class="flex justify-between items-center mb-4">
+      <h3 class="font-bold text-lg">Children</h3>
+      <button onclick="openModal('add-child')" class="bg-primary-container text-on-primary-container px-4 py-1.5 rounded-full font-bold text-sm hover:scale-105 transition-all">+ Add</button>
+    </div>
+    <div id="dash-children"></div>
+  </div>
+
+  <!-- Chores Card -->
+  <div class="glass-card rounded-[24px] p-6 mb-4">
+    <div class="flex justify-between items-center mb-4">
+      <h3 class="font-bold text-lg" id="dash-chores-title">Chores</h3>
+      <button onclick="openModal('add-chore')" class="bg-primary-container text-on-primary-container px-4 py-1.5 rounded-full font-bold text-sm hover:scale-105 transition-all">+ New</button>
+    </div>
+    <div id="dash-chores-list"></div>
+  </div>
+
+  <!-- History -->
+  <div class="glass-card rounded-[24px] p-6" id="dash-history-card" style="display:none">
+    <h3 class="font-bold text-lg mb-4">Recent Completions</h3>
+    <div id="dash-history"></div>
+  </div>
+</div>
+
+<!-- ===== CHORES (parent) ===== -->
+<div id="page-chores" class="page max-w-4xl mx-auto px-5 py-6 fadein">
+  <h2 class="text-headline-lg font-bold mb-1">Chore Wheel</h2>
+  <p class="text-on-surface-variant mb-5">Spin to assign a random chore!</p>
+
+  <div class="glass-card rounded-[24px] p-6 text-center mb-4">
+    <div class="relative w-52 h-52 mx-auto mb-5">
+      <svg id="wheel-svg" viewBox="0 0 200 200" width="200" height="200" class="spin-anim"></svg>
+      <div class="absolute -top-3 left-1/2 -translate-x-1/2 text-2xl">📍</div>
+    </div>
+    <button id="spin-btn" onclick="spinWheel()" class="bg-primary text-on-primary px-10 py-4 rounded-full font-bold text-lg hover:scale-105 active:scale-95 transition-all shadow-lg shadow-primary/30">🎲 Spin!</button>
+    <button onclick="resetChores()" class="block mx-auto mt-3 text-primary font-bold text-sm hover:underline">Reset all chores</button>
+    <div id="spin-result" class="hidden pop mt-5 p-5 bg-surface-container rounded-[20px]"></div>
+  </div>
+
+  <!-- Assigned -->
+  <div id="assigned-section" class="glass-card rounded-[24px] p-6 mb-4 hidden">
+    <h3 class="font-bold text-lg mb-4">🎯 Assigned Chores</h3>
+    <div id="assigned-list"></div>
+  </div>
+
+  <!-- All Chores filter -->
+  <div class="glass-card rounded-[24px] p-6">
+    <div id="cat-filters" class="flex gap-2 mb-4 flex-wrap"></div>
+    <div id="all-chores-list"></div>
+  </div>
+</div>
+
+<!-- ===== KID ZONE ===== -->
+<div id="page-kidzone" class="page active max-w-3xl mx-auto px-5 py-6 fadein">
+  <!-- Child selector -->
+  <div id="kid-selector" class="flex gap-3 mb-5 overflow-x-auto pb-1"></div>
+  <!-- Profile hero -->
+  <div id="kid-hero" class="rounded-[24px] p-6 text-center text-white mb-4"></div>
+  <!-- Celebrate banner -->
+  <div id="celebrate" class="hidden pop bg-gradient-to-r from-amber-400 to-yellow-300 rounded-[20px] p-5 text-center mb-4">
+    <div class="text-4xl">🎉</div><div class="text-xl font-extrabold">Amazing job!</div>
+  </div>
+  <!-- My Chores -->
+  <div class="glass-card rounded-[24px] p-6 mb-4">
+    <h3 class="font-bold text-lg mb-4" id="kid-chores-title">My Chores</h3>
+    <div id="kid-chores"></div>
+  </div>
+  <!-- Stars -->
+  <div id="stars-card" class="glass-card rounded-[24px] p-6 hidden">
+    <h3 class="font-bold text-lg mb-3">⭐ My Stars</h3>
+    <div id="stars-row" class="flex flex-wrap gap-1"></div>
+  </div>
+</div>
+
+<!-- ===== LEADERBOARD ===== -->
+<div id="page-leaderboard" class="page max-w-4xl mx-auto px-5 py-6 fadein">
+  <!-- Banner -->
+  <div class="relative overflow-hidden rounded-3xl p-8 bg-gradient-to-r from-primary-container to-tertiary-container text-on-primary-container shadow-lg mb-6">
+    <div class="relative z-10 flex flex-col md:flex-row items-center justify-between gap-4">
+      <div>
+        <p class="text-label-md opacity-80 uppercase tracking-widest">Daily Inspiration</p>
+        <h2 class="font-bold text-2xl" id="quote-text">"Every small step leads to giant victories!"</h2>
+      </div>
+      <div class="flex -space-x-3">
+        <div class="h-14 w-14 rounded-full border-4 border-white/20 bg-white/10 flex items-center justify-center backdrop-blur-md floating"><span class="material-symbols-outlined text-2xl fill-icon">star</span></div>
+        <div class="h-14 w-14 rounded-full border-4 border-white/20 bg-white/10 flex items-center justify-center backdrop-blur-md floating" style="animation-delay:.4s"><span class="material-symbols-outlined text-2xl fill-icon">emoji_events</span></div>
+      </div>
+    </div>
+    <div class="absolute -top-20 -right-20 w-60 h-60 bg-white/10 rounded-full blur-3xl"></div>
+  </div>
+
+  <!-- Podium -->
+  <div class="glass-card rounded-[32px] p-8 mb-5">
+    <h2 class="font-bold text-2xl text-primary mb-8">🏆 Hall of Fame</h2>
+    <div id="podium" class="flex items-end justify-center gap-6 md:gap-14 pt-8 pb-2"></div>
+  </div>
+
+  <!-- All standings -->
+  <div class="glass-card rounded-[24px] p-6 mb-5">
+    <h3 class="font-bold text-xl mb-5">All Time Points</h3>
+    <div id="standings-list"></div>
+  </div>
+
+  <!-- Activity log -->
+  <div class="glass-card rounded-[24px] p-6">
+    <h3 class="font-bold text-xl mb-5">📜 Family Activity Log</h3>
+    <div class="overflow-x-auto">
+      <table class="w-full text-left">
+        <thead><tr class="border-b border-outline-variant/30">
+          <th class="pb-3 text-label-md text-on-surface-variant uppercase">Member</th>
+          <th class="pb-3 text-label-md text-on-surface-variant uppercase">Chore</th>
+          <th class="pb-3 text-label-md text-on-surface-variant uppercase text-right">Points</th>
+          <th class="pb-3 text-label-md text-on-surface-variant uppercase text-right">Time</th>
+        </tr></thead>
+        <tbody id="history-table"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+</main>
+
+<!-- BOTTOM NAV -->
+<nav class="fixed bottom-0 left-0 right-0 bg-surface/90 backdrop-blur-2xl border-t border-surface-variant/30 flex px-3 py-2 gap-1 z-50">
+  <button class="nav-btn active" id="nav-dashboard" onclick="navTo('dashboard')">
+    <span class="material-symbols-outlined text-xl">dashboard</span>Dashboard
+  </button>
+  <button class="nav-btn" id="nav-chores" onclick="navTo('chores')">
+    <span class="material-symbols-outlined text-xl">task_alt</span>Chores
+  </button>
+  <button class="nav-btn" id="nav-kidzone" onclick="navTo('kidzone')">
+    <span class="material-symbols-outlined text-xl">videogame_asset</span>Kid Zone
+  </button>
+  <button class="nav-btn" id="nav-leaderboard" onclick="navTo('leaderboard')">
+    <span class="material-symbols-outlined text-xl">emoji_events</span>Scores
+  </button>
+</nav>
+
+<!-- MODALS -->
+<div id="pin-modal" class="modal-ov hidden">
+  <div class="modal-box text-center">
+    <div class="text-5xl mb-3">🔐</div>
+    <h2 class="text-xl font-extrabold mb-1">Parent Access</h2>
+    <p class="text-on-surface-variant text-sm mb-5">Enter your 4-digit PIN</p>
+    <div class="flex gap-3 justify-center mb-6" id="pin-dots"></div>
+    <p id="pin-error" class="text-error text-xs mb-3 hidden">Wrong PIN, try again.</p>
+    <div class="grid grid-cols-3 gap-2 max-w-[200px] mx-auto mb-4" id="pin-keypad"></div>
+    <button onclick="closeModal('pin')" class="w-full border-2 border-outline-variant text-on-surface-variant py-3 rounded-full font-bold hover:border-primary hover:text-primary transition-all">Cancel</button>
+  </div>
+</div>
+
+<div id="add-child-modal" class="modal-ov hidden">
+  <div class="modal-box">
+    <h3 class="text-lg font-extrabold mb-4">Add Child</h3>
+    <input id="new-child-name" placeholder="Child's name" class="mb-3"/>
+    <label class="text-xs font-semibold text-on-surface-variant block mb-2">Avatar</label>
+    <div id="avatar-picker" class="flex flex-wrap gap-2 mb-5"></div>
+    <div class="flex gap-3">
+      <button onclick="closeModal('add-child')" class="flex-1 border-2 border-outline-variant text-on-surface-variant py-3 rounded-full font-bold hover:border-primary transition-all">Cancel</button>
+      <button onclick="submitAddChild()" class="flex-1 bg-primary-container text-on-primary-container py-3 rounded-full font-bold hover:scale-105 transition-all">Add Child</button>
+    </div>
+  </div>
+</div>
+
+<div id="add-chore-modal" class="modal-ov hidden">
+  <div class="modal-box">
+    <h3 class="text-lg font-extrabold mb-4">New Chore</h3>
+    <input id="new-chore-name" placeholder="Chore name" class="mb-3"/>
+    <input id="new-chore-pts" type="number" placeholder="Points" value="30" class="mb-3"/>
+    <select id="new-chore-cat" class="mb-3">
+      <option>Kitchen</option><option>Bedroom</option><option>Living Room</option><option>Garden</option><option>Bathroom</option><option>Organization</option>
+    </select>
+    <select id="new-chore-diff" class="mb-5">
+      <option>Easy</option><option>Medium</option><option>Hard</option>
+    </select>
+    <div class="flex gap-3">
+      <button onclick="closeModal('add-chore')" class="flex-1 border-2 border-outline-variant text-on-surface-variant py-3 rounded-full font-bold hover:border-primary transition-all">Cancel</button>
+      <button onclick="submitAddChore()" class="flex-1 bg-primary-container text-on-primary-container py-3 rounded-full font-bold hover:scale-105 transition-all">Add Chore</button>
+    </div>
+  </div>
+</div>
+
+<div id="assign-modal" class="modal-ov hidden">
+  <div class="modal-box text-center">
+    <div id="assign-chore-info" class="mb-5"></div>
+    <p class="text-sm text-on-surface-variant mb-3">Assign to:</p>
+    <div id="assign-kids" class="flex flex-wrap gap-2 justify-center mb-4"></div>
+    <button onclick="closeModal('assign')" class="w-full border-2 border-outline-variant text-on-surface-variant py-3 rounded-full font-bold hover:border-primary transition-all">Cancel</button>
+  </div>
+</div>
+
+<script>
+// ===== STATE =====
+const STORAGE_KEY = 'chorehero_v2';
+const AVATARS = ['😊','🦁','🐻','🦊','🐼','🐧','🦋','🌸','⭐','🚀','🎸','🏆'];
+const CAT_COLORS = {Kitchen:'#ef4444',Bedroom:'#6366f1',Garden:'#22c55e','Living Room':'#f59e0b',Bathroom:'#06b6d4',Organization:'#8b5cf6'};
+const DIFF_COLORS = {Easy:'#22c55e',Medium:'#f59e0b',Hard:'#ef4444'};
+const QUOTES = ["Every small step leads to giant victories!","Teamwork makes the dream work!","A tidy room is a happy room!","You're a chore-crushing champion!","The magic is in the effort, not the task.","Helping hands are happy hands!"];
+
+const DEFAULT = {
+  pin:'5452',
+  children:[
+    {id:1,name:'Leo',avatar:'🦁',points:1250,color:'#4f46e5'},
+    {id:2,name:'Maya',avatar:'🌸',points:850,color:'#ec4899'}
+  ],
+  chores:[
+    {id:1,name:'Wash Dishes',points:30,category:'Kitchen',difficulty:'Easy',icon:'🍽️',assignedTo:null,completed:false},
+    {id:2,name:'Clean Bedroom',points:50,category:'Bedroom',difficulty:'Medium',icon:'🛏️',assignedTo:null,completed:false},
+    {id:3,name:'Mow Lawn',points:150,category:'Garden',difficulty:'Hard',icon:'🌿',assignedTo:null,completed:false},
+    {id:4,name:'Vacuum Living Room',points:40,category:'Living Room',difficulty:'Easy',icon:'🧹',assignedTo:null,completed:false},
+    {id:5,name:'Take Out Trash',points:25,category:'Kitchen',difficulty:'Easy',icon:'🗑️',assignedTo:null,completed:false},
+    {id:6,name:'Organize Closet',points:60,category:'Bedroom',difficulty:'Medium',icon:'👗',assignedTo:null,completed:false}
+  ],
+  history:[
+    {id:1,childName:'Leo',choreName:'Wash Dishes',points:30,time:'2h ago'},
+    {id:2,childName:'Maya',choreName:'Clean Bedroom',points:50,time:'5h ago'}
+  ]
+};
+
+let S = loadState();
+let isParent = false;
+let currentTab = 'kidzone';
+let activeKidId = S.children[0]?.id || null;
+let wheelRot = 0;
+let spinning = false;
+let landedChore = null;
+let pendingTab = null;
+let pinInput = '';
+let selectedAvatar = '😊';
+let choreFilter = 'All';
+let quoteIdx = 0;
+
+function loadState() {
+  try { const r = localStorage.getItem(STORAGE_KEY); return r ? JSON.parse(r) : JSON.parse(JSON.stringify(DEFAULT)); }
+  catch { return JSON.parse(JSON.stringify(DEFAULT)); }
+}
+function saveState() { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(S)); } catch {} }
+
+// ===== NAV =====
+function navTo(tab) {
+  if ((tab === 'dashboard' || tab === 'chores') && !isParent) {
+    pendingTab = tab; openPinModal(); return;
+  }
+  setTab(tab);
+}
+
+function setTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + tab).classList.add('active');
+  document.getElementById('nav-' + tab).classList.add('active');
+  renderPage(tab);
+}
+
+function renderPage(tab) {
+  if (tab === 'dashboard') renderDashboard();
+  else if (tab === 'chores') renderChores();
+  else if (tab === 'kidzone') renderKidZone();
+  else if (tab === 'leaderboard') renderLeaderboard();
+}
+
+// ===== PIN =====
+function openPinModal() {
+  pinInput = '';
+  document.getElementById('pin-error').classList.add('hidden');
+  renderPinDots();
+  document.getElementById('pin-modal').classList.remove('hidden');
+  renderPinKeypad();
+}
+function closeModal(type) {
+  if (type === 'pin') { document.getElementById('pin-modal').classList.add('hidden'); pendingTab = null; }
+  if (type === 'add-child') document.getElementById('add-child-modal').classList.add('hidden');
+  if (type === 'add-chore') document.getElementById('add-chore-modal').classList.add('hidden');
+  if (type === 'assign') document.getElementById('assign-modal').classList.add('hidden');
+}
+function renderPinDots() {
+  document.getElementById('pin-dots').innerHTML = [0,1,2,3].map(i =>
+    `<div class="w-4 h-4 rounded-full border-2 border-outline-variant transition-all" style="background:${i < pinInput.length ? '#3525cd' : '#e5eeff'}"></div>`
+  ).join('');
+}
+function renderPinKeypad() {
+  document.getElementById('pin-keypad').innerHTML = [1,2,3,4,5,6,7,8,9,'',0,'⌫'].map((k,i) =>
+    k === '' ? '<div></div>' :
+    `<button onclick="pinKey('${k}')" class="h-14 rounded-full ${k!=='⌫'?'border border-outline-variant bg-white':'bg-transparent'} text-xl font-bold hover:bg-surface-container transition-all">${k}</button>`
+  ).join('');
+}
+function pinKey(k) {
+  if (k === '⌫') { pinInput = pinInput.slice(0,-1); renderPinDots(); return; }
+  if (pinInput.length >= 4) return;
+  pinInput += k;
+  renderPinDots();
+  if (pinInput.length === 4) {
+    if (pinInput === S.pin) {
+      isParent = true;
+      document.getElementById('mode-btn').textContent = '👨‍👩‍👧 Parent';
+      document.getElementById('mode-btn').classList.add('bg-primary','text-on-primary');
+      document.getElementById('mode-btn').classList.remove('bg-surface-container','text-on-surface-variant');
+      closeModal('pin');
+      if (pendingTab) { setTab(pendingTab); pendingTab = null; }
+    } else {
+      pinInput = '';
+      renderPinDots();
+      const e = document.getElementById('pin-error');
+      e.classList.remove('hidden');
+      setTimeout(() => e.classList.add('hidden'), 2000);
+    }
+  }
+}
+function handleModeToggle() {
+  if (isParent) {
+    isParent = false;
+    document.getElementById('mode-btn').textContent = '👦 Kid Mode';
+    document.getElementById('mode-btn').classList.remove('bg-primary','text-on-primary');
+    document.getElementById('mode-btn').classList.add('bg-surface-container','text-on-surface-variant');
+    setTab('kidzone');
+  } else { openPinModal(); }
+}
+
+// ===== MODALS =====
+function openModal(type) {
+  if (type === 'add-child') {
+    document.getElementById('new-child-name').value = '';
+    selectedAvatar = '😊';
+    document.getElementById('avatar-picker').innerHTML = AVATARS.map(a =>
+      `<button onclick="selectAvatar('${a}')" id="av-${a}" class="w-10 h-10 rounded-xl border-2 text-xl transition-all ${a===selectedAvatar?'border-primary bg-surface-container':'border-outline-variant bg-white'}">${a}</button>`
+    ).join('');
+    document.getElementById('add-child-modal').classList.remove('hidden');
+  }
+  if (type === 'add-chore') {
+    document.getElementById('new-chore-name').value = '';
+    document.getElementById('new-chore-pts').value = '30';
+    document.getElementById('add-chore-modal').classList.remove('hidden');
+  }
+}
+function selectAvatar(a) {
+  selectedAvatar = a;
+  document.querySelectorAll('[id^="av-"]').forEach(b => {
+    b.className = 'w-10 h-10 rounded-xl border-2 text-xl transition-all ' +
+      (b.id === 'av-'+a ? 'border-primary bg-surface-container' : 'border-outline-variant bg-white');
+  });
+}
+function submitAddChild() {
+  const name = document.getElementById('new-child-name').value.trim();
+  if (!name) return;
+  S.children.push({id:Date.now(),name,avatar:selectedAvatar,points:0,color:`hsl(${Math.random()*360},60%,55%)`});
+  saveState(); closeModal('add-child'); renderPage(currentTab);
+}
+function submitAddChore() {
+  const name = document.getElementById('new-chore-name').value.trim();
+  if (!name) return;
+  S.chores.push({id:Date.now(),name,points:+document.getElementById('new-chore-pts').value||30,
+    category:document.getElementById('new-chore-cat').value,
+    difficulty:document.getElementById('new-chore-diff').value,
+    icon:'✨',assignedTo:null,completed:false});
+  saveState(); closeModal('add-chore'); renderPage(currentTab);
+}
+function deleteChild(id) {
+  S.children = S.children.filter(c => c.id !== id);
+  if (activeKidId === id) activeKidId = S.children[0]?.id || null;
+  saveState(); renderPage(currentTab);
+}
+function deleteChore(id) {
+  S.chores = S.chores.filter(c => c.id !== id);
+  saveState(); renderPage(currentTab);
+}
+
+// ===== DASHBOARD =====
+function renderDashboard() {
+  const totalPts = S.children.reduce((s,c) => s+c.points, 0);
+  document.getElementById('dash-stats').innerHTML = [
+    {label:'Total Pts',val:totalPts.toLocaleString(),icon:'💎',col:'#4f46e5'},
+    {label:'Kids',val:S.children.length,icon:'👨‍👩‍👧',col:'#22c55e'},
+    {label:'Chores',val:S.chores.length,icon:'🎯',col:'#f59e0b'}
+  ].map(s => `
+    <div class="glass-card rounded-[20px] p-4 text-center">
+      <div class="text-2xl mb-1">${s.icon}</div>
+      <div class="text-2xl font-extrabold" style="color:${s.col}">${s.val}</div>
+      <div class="text-xs font-semibold text-on-surface-variant">${s.label}</div>
+    </div>`).join('');
+
+  document.getElementById('dash-children').innerHTML = S.children.length === 0
+    ? '<p class="text-on-surface-variant text-sm text-center py-4">No children added yet.</p>'
+    : S.children.map(c => `
+      <div class="flex items-center gap-3 py-3 border-b border-surface-container">
+        <div class="w-10 h-10 rounded-full flex items-center justify-center text-xl flex-shrink-0" style="background:${c.color}20;border:2px solid ${c.color}">${c.avatar}</div>
+        <div class="flex-1">
+          <div class="font-bold text-sm">${c.name}</div>
+          <div class="text-xs text-on-surface-variant">${S.chores.filter(ch=>ch.assignedTo===c.id&&!ch.completed).length} active chores</div>
+        </div>
+        <div class="font-extrabold text-tertiary-container">${c.points.toLocaleString()} pts</div>
+        <button onclick="deleteChild(${c.id})" class="text-on-surface-variant opacity-50 hover:opacity-100 hover:text-error transition-all text-lg font-bold">×</button>
+      </div>`).join('');
+
+  document.getElementById('dash-chores-title').textContent = `Chores (${S.chores.length})`;
+  document.getElementById('dash-chores-list').innerHTML = S.chores.length === 0
+    ? '<p class="text-on-surface-variant text-sm text-center py-4">No chores added.</p>'
+    : S.chores.map(ch => `
+      <div class="flex items-center gap-3 py-2 border-b border-surface-container">
+        <span class="text-xl">${ch.icon}</span>
+        <div class="flex-1">
+          <div class="font-semibold text-sm">${ch.name}</div>
+          <div class="flex gap-1 mt-1">
+            <span class="tag cat-${ch.category.replace(' ','-')}">${ch.category}</span>
+            <span class="tag diff-${ch.difficulty}">${ch.difficulty}</span>
+          </div>
+        </div>
+        <div class="font-extrabold text-tertiary-container text-sm">${ch.points}pt</div>
+        <button onclick="deleteChore(${ch.id})" class="text-on-surface-variant opacity-40 hover:opacity-100 hover:text-error transition-all text-base">×</button>
+      </div>`).join('');
+
+  const hCard = document.getElementById('dash-history-card');
+  if (S.history.length > 0) {
+    hCard.style.display = '';
+    document.getElementById('dash-history').innerHTML = S.history.slice(0,5).map(h => `
+      <div class="flex justify-between py-2 border-b border-surface-container text-sm">
+        <div><span class="font-bold">${h.childName}</span> <span class="text-on-surface-variant">${h.choreName}</span></div>
+        <div class="flex gap-3 items-center"><span class="font-extrabold text-green-600">+${h.points}pt</span><span class="text-xs text-on-surface-variant">${h.time}</span></div>
+      </div>`).join('');
+  } else hCard.style.display = 'none';
+}
+
+// ===== CHORES VIEW =====
+function renderChores() {
+  const available = S.chores.filter(c => !c.completed && !c.assignedTo);
+  const assigned = S.chores.filter(c => !c.completed && c.assignedTo);
+  const N = Math.min(available.length, 8);
+  const colors = ['#4f46e5','#ec4899','#22c55e','#f59e0b','#6366f1','#ef4444','#8b5cf6','#06b6d4'];
+  const cx=100,cy=100,r=90;
+  let slices = '';
+  if (N > 0) {
+    for (let i=0;i<N;i++) {
+      const a0=(i/N)*Math.PI*2-Math.PI/2, a1=((i+1)/N)*Math.PI*2-Math.PI/2;
+      const x0=cx+r*Math.cos(a0),y0=cy+r*Math.sin(a0),x1=cx+r*Math.cos(a1),y1=cy+r*Math.sin(a1);
+      const mid=(a0+a1)/2, tx=cx+58*Math.cos(mid),ty=cy+58*Math.sin(mid);
+      slices += `<g><path d="M${cx},${cy} L${x0},${y0} A${r},${r} 0 0,1 ${x1},${y1} Z" fill="${colors[i%colors.length]}" opacity=".85"/>
+        <text x="${tx}" y="${ty}" text-anchor="middle" dominant-baseline="middle" fill="#fff" font-size="9" font-weight="700">${(available[i]?.name||'').slice(0,8)}</text></g>`;
+    }
+  } else {
+    slices = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="#e5eeff"/>`;
+  }
+  slices += `<circle cx="${cx}" cy="${cy}" r="13" fill="#fff" stroke="#e5e7eb" stroke-width="2"/>`;
+  document.getElementById('wheel-svg').innerHTML = slices;
+  document.getElementById('wheel-svg').style.transform = `rotate(${wheelRot}deg)`;
+
+  document.getElementById('spin-btn').disabled = spinning || !available.length;
+  document.getElementById('spin-btn').textContent = spinning ? '🎲 Spinning...' : !available.length ? '✅ All Done!' : '🎲 Spin!';
+
+  // Assigned
+  const assEl = document.getElementById('assigned-section');
+  if (assigned.length > 0) {
+    assEl.classList.remove('hidden');
+    document.getElementById('assigned-list').innerHTML = assigned.map(ch => {
+      const kid = S.children.find(c => c.id === ch.assignedTo);
+      return `<div class="flex items-center gap-3 p-3 rounded-[14px] mb-2" style="background:rgba(79,70,229,.05);border:1.5px solid ${CAT_COLORS[ch.category]||'#888'}30">
+        <span class="text-2xl">${ch.icon}</span>
+        <div class="flex-1"><div class="font-bold text-sm">${ch.name}</div><div class="text-xs text-on-surface-variant">${kid?.avatar||''} ${kid?.name||''}</div></div>
+        <div class="font-extrabold text-tertiary-container text-sm mr-2">${ch.points}pt</div>
+        <button onclick="completeChoreParent(${ch.id})" class="bg-primary-container text-on-primary-container px-3 py-1.5 rounded-full text-xs font-bold hover:scale-105 transition-all">✓ Done</button>
+      </div>`;
+    }).join('');
+  } else assEl.classList.add('hidden');
+
+  // Filter
+  const cats = ['All', ...new Set(S.chores.map(c=>c.category))];
+  document.getElementById('cat-filters').innerHTML = cats.map(c =>
+    `<button onclick="setCatFilter('${c}')" class="px-3 py-1 rounded-full text-xs font-bold transition-all ${choreFilter===c?'bg-primary text-on-primary':'bg-surface-container text-on-surface-variant hover:bg-surface-container-high'}">${c}</button>`
+  ).join('');
+  const filtered = choreFilter==='All' ? S.chores : S.chores.filter(c=>c.category===choreFilter);
+  document.getElementById('all-chores-list').innerHTML = filtered.map(ch => `
+    <div class="flex items-center gap-3 py-2 border-b border-surface-container ${ch.completed?'opacity-40':''}">
+      <span class="text-xl">${ch.icon}</span>
+      <div class="flex-1">
+        <div class="font-semibold text-sm ${ch.completed?'line-through':''}">${ch.name}</div>
+        <div class="flex gap-1 mt-1">
+          <span class="tag cat-${ch.category.replace(' ','-')}">${ch.category}</span>
+          <span class="tag diff-${ch.difficulty}">${ch.difficulty}</span>
+        </div>
+      </div>
+      <div class="font-extrabold text-tertiary-container text-sm">${ch.points}pt</div>
+      <div class="text-xs text-on-surface-variant">${ch.completed?'✅':ch.assignedTo?'📌 '+S.children.find(c=>c.id===ch.assignedTo)?.name||'':'—'}</div>
+    </div>`).join('');
+}
+
+function setCatFilter(c) { choreFilter = c; renderChores(); }
+
+function spinWheel() {
+  const available = S.chores.filter(c => !c.completed && !c.assignedTo);
+  if (!available.length || spinning) return;
+  spinning = true; landedChore = null;
+  document.getElementById('spin-result').classList.add('hidden');
+  const extra = 1440 + Math.floor(Math.random()*360);
+  wheelRot += extra;
+  const svg = document.getElementById('wheel-svg');
+  svg.style.transition = 'transform 2.1s cubic-bezier(0.17,0.67,0.12,1)';
+  svg.style.transform = `rotate(${wheelRot}deg)`;
+  document.getElementById('spin-btn').disabled = true;
+  document.getElementById('spin-btn').textContent = '🎲 Spinning...';
+  setTimeout(() => {
+    spinning = false;
+    landedChore = available[Math.floor(Math.random()*available.length)];
+    showSpinResult(landedChore);
+    document.getElementById('spin-btn').disabled = false;
+    document.getElementById('spin-btn').textContent = '🎲 Spin!';
+  }, 2150);
+}
+
+function showSpinResult(ch) {
+  const el = document.getElementById('spin-result');
+  el.classList.remove('hidden');
+  el.innerHTML = `
+    <div class="text-4xl mb-2">${ch.icon}</div>
+    <div class="text-xl font-extrabold mb-2">${ch.name}</div>
+    <div class="flex gap-2 justify-center mb-4">
+      <span class="tag cat-${ch.category.replace(' ','-')}">${ch.category}</span>
+      <span class="font-extrabold text-tertiary-container">${ch.points} pts</span>
+    </div>
+    <p class="text-sm text-on-surface-variant mb-3">Assign to:</p>
+    <div class="flex gap-2 flex-wrap justify-center">
+      ${S.children.map(c => `<button onclick="assignChore(${ch.id},${c.id})" class="bg-primary-container text-on-primary-container px-4 py-2 rounded-full font-bold text-sm hover:scale-105 transition-all">${c.avatar} ${c.name}</button>`).join('')}
+    </div>`;
+}
+
+function assignChore(choreId, childId) {
+  S.chores = S.chores.map(c => c.id===choreId ? {...c, assignedTo:childId} : c);
+  saveState(); landedChore = null;
+  document.getElementById('spin-result').classList.add('hidden');
+  renderChores();
+}
+
+function completeChoreParent(choreId) {
+  const chore = S.chores.find(c => c.id===choreId);
+  const child = S.children.find(c => c.id===chore?.assignedTo);
+  if (!chore || !child) return;
+  S.chores = S.chores.map(c => c.id===choreId ? {...c,completed:true} : c);
+  S.children = S.children.map(c => c.id===child.id ? {...c,points:c.points+chore.points} : c);
+  S.history = [{id:Date.now(),childName:child.name,choreName:chore.name,points:chore.points,time:'just now'},...S.history].slice(0,20);
+  saveState(); renderChores();
+}
+
+function resetChores() {
+  S.chores = S.chores.map(c => ({...c,completed:false,assignedTo:null}));
+  saveState(); renderChores();
+}
+
+// ===== KID ZONE =====
+function renderKidZone() {
+  if (!activeKidId && S.children.length) activeKidId = S.children[0].id;
+  // Selector
+  document.getElementById('kid-selector').innerHTML = S.children.length > 1
+    ? S.children.map(c => `
+        <button onclick="selectKid(${c.id})" class="flex-shrink-0 flex flex-col items-center gap-1 px-5 py-3 rounded-[14px] border-2 transition-all font-inherit"
+          style="border-color:${c.id===activeKidId?c.color:'#c7c4d8'};background:${c.id===activeKidId?c.color+'18':'#fff'}">
+          <span class="text-2xl">${c.avatar}</span>
+          <span class="text-xs font-bold" style="color:${c.id===activeKidId?c.color:'#464555'}">${c.name}</span>
+        </button>`).join('') : '';
+
+  const kid = S.children.find(c => c.id===activeKidId);
+  if (!kid) {
+    document.getElementById('kid-hero').innerHTML = '<div class="text-5xl mb-3">👨‍👩‍👧</div><p class="text-on-surface-variant">No children added yet. Ask a parent!</p>';
+    document.getElementById('kid-chores').innerHTML = '';
+    return;
+  }
+  const stars = Math.floor((kid.points||0)/100);
+  const nextStar = (kid.points||0)%100;
+  document.getElementById('kid-hero').style.background = `linear-gradient(135deg,${kid.color},${kid.color}bb)`;
+  document.getElementById('kid-hero').innerHTML = `
+    <div class="text-6xl mb-2">${kid.avatar}</div>
+    <div class="text-2xl font-extrabold">${kid.name}</div>
+    <div class="text-4xl font-extrabold mt-2">${(kid.points||0).toLocaleString()}</div>
+    <div class="text-sm opacity-80">points earned</div>
+    <div class="mt-4 bg-white/25 rounded-full h-3 overflow-hidden">
+      <div class="h-full bg-white/80 rounded-full transition-all" style="width:${nextStar}%"></div>
+    </div>
+    <div class="text-xs mt-1 opacity-80">${nextStar}/100 to next ⭐ (${stars} stars total)</div>`;
+
+  const myChores = S.chores.filter(c => c.assignedTo===activeKidId && !c.completed);
+  const title = document.getElementById('kid-chores-title');
+  title.innerHTML = `My Chores ${myChores.length>0?`<span class="bg-primary text-on-primary rounded-full px-2 py-0.5 text-xs ml-2">${myChores.length}</span>`:''}`;
+
+  document.getElementById('kid-chores').innerHTML = myChores.length === 0
+    ? '<div class="text-center py-5"><div class="text-4xl mb-2">🎉</div><p class="font-semibold text-on-surface-variant">All chores done!</p></div>'
+    : myChores.map(ch => `
+      <div class="flex gap-3 items-center p-3 rounded-[18px] mb-3" style="background:rgba(79,70,229,.05);border:1.5px solid ${CAT_COLORS[ch.category]||'#888'}30">
+        <div class="w-12 h-12 rounded-[14px] flex items-center justify-center text-2xl flex-shrink-0" style="background:${CAT_COLORS[ch.category]||'#888'}20">${ch.icon}</div>
+        <div class="flex-1">
+          <div class="font-bold text-sm">${ch.name}</div>
+          <div class="flex items-center gap-2 mt-1">
+            <span class="tag cat-${ch.category.replace(' ','-')}">${ch.category}</span>
+            <span class="font-bold text-tertiary-container text-xs">+${ch.points} pts</span>
+          </div>
+        </div>
+        <button onclick="completeChoreKid(${ch.id})" class="bg-primary-container text-on-primary-container px-4 py-2.5 rounded-full font-bold text-lg hover:scale-105 transition-all flex-shrink-0">✓</button>
+      </div>`).join('');
+
+  const starsCard = document.getElementById('stars-card');
+  if (stars > 0) {
+    starsCard.classList.remove('hidden');
+    document.getElementById('stars-row').innerHTML =
+      Array.from({length:Math.min(stars,20)}).map(()=>'<span class="text-2xl">⭐</span>').join('') +
+      (stars>20?`<span class="text-sm text-on-surface-variant self-center">+${stars-20} more</span>`:'');
+  } else starsCard.classList.add('hidden');
+}
+
+function selectKid(id) { activeKidId = id; renderKidZone(); }
+
+function completeChoreKid(choreId) {
+  const chore = S.chores.find(c => c.id===choreId);
+  if (!chore) return;
+  S.chores = S.chores.map(c => c.id===choreId ? {...c,completed:true} : c);
+  S.children = S.children.map(c => c.id===activeKidId ? {...c,points:c.points+chore.points} : c);
+  const kid = S.children.find(c => c.id===activeKidId);
+  S.history = [{id:Date.now(),childName:kid.name,choreName:chore.name,points:chore.points,time:'just now'},...S.history].slice(0,20);
+  saveState();
+  const cel = document.getElementById('celebrate');
+  cel.classList.remove('hidden');
+  setTimeout(() => cel.classList.add('hidden'), 2000);
+  renderKidZone();
+}
+
+// ===== LEADERBOARD =====
+function renderLeaderboard() {
+  const sorted = [...S.children].sort((a,b) => b.points - a.points);
+  const maxPts = sorted[0]?.points || 1;
+  const medals = ['🥇','🥈','🥉'];
+  const podiumColors = [
+    {grad:'from-yellow-600 to-yellow-300',h:'podium-1',border:'border-yellow-400',rank:1},
+    {grad:'from-slate-400 to-slate-200',h:'podium-2',border:'border-slate-300',rank:2},
+    {grad:'from-orange-500 to-orange-300',h:'podium-3',border:'border-orange-400',rank:3}
+  ];
+  // Order: 2nd, 1st, 3rd
+  const order = [sorted[1],sorted[0],sorted[2]].filter(Boolean);
+  const podStyles = [podiumColors[1],podiumColors[0],podiumColors[2]];
+  document.getElementById('podium').innerHTML = order.map((kid,i) => {
+    const ps = podStyles[i];
+    return `<div class="flex flex-col items-center">
+      ${i===1?'<span class="material-symbols-outlined text-yellow-500 text-4xl mb-2 floating fill-icon">workspace_premium</span>':''}
+      <div class="relative mb-4">
+        <div class="rounded-full overflow-hidden border-4 ${ps.border} flex items-center justify-center text-4xl bg-white ${i===1?'w-20 h-20':'w-14 h-14'}">${kid.avatar}</div>
+        <div class="absolute -bottom-2 -right-2 rounded-full flex items-center justify-center font-bold text-white border-2 border-white text-sm ${i===1?'w-8 h-8 text-base':'w-6 h-6'}" style="background:${i===0?'#94a3b8':i===1?'#eab308':'#f97316'}">${ps.rank}</div>
+      </div>
+      <div class="${ps.h} ${i===1?'w-32 md:w-40':'w-24 md:w-28'} bg-gradient-to-t ${ps.grad} rounded-t-2xl flex flex-col items-center justify-end pb-4 shadow-inner">
+        <span class="text-white font-extrabold">${kid.points.toLocaleString()}</span>
+        <span class="text-white/80 text-xs font-bold">${kid.name}</span>
+      </div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('standings-list').innerHTML = sorted.length === 0
+    ? '<p class="text-on-surface-variant text-sm text-center py-4">No data yet.</p>'
+    : sorted.map((kid,i) => `
+      <div class="mb-4">
+        <div class="flex items-center gap-3 mb-1.5">
+          <span class="text-xl w-6">${medals[i]||'#'+(i+1)}</span>
+          <div class="w-9 h-9 rounded-full flex items-center justify-center text-xl border-2 flex-shrink-0" style="background:${kid.color}20;border-color:${kid.color}">${kid.avatar}</div>
+          <div class="flex-1 font-bold text-sm">${kid.name}</div>
+          <div class="font-extrabold text-tertiary-container text-lg">${kid.points.toLocaleString()}</div>
+        </div>
+        <div class="pb"><div class="pf" style="width:${(kid.points/maxPts)*100}%;background:linear-gradient(90deg,${kid.color},${kid.color}88)"></div></div>
+      </div>`).join('');
+
+  document.getElementById('history-table').innerHTML = S.history.length === 0
+    ? '<tr><td colspan="4" class="py-6 text-center text-on-surface-variant text-sm">No history yet.</td></tr>'
+    : S.history.slice(0,15).map(h => `
+      <tr class="border-b border-surface-variant/30 hover:bg-primary-container/5 transition-colors">
+        <td class="py-3 font-bold text-sm">${h.childName}</td>
+        <td class="py-3 text-sm text-on-surface-variant">${h.choreName}</td>
+        <td class="py-3 text-right font-extrabold text-green-600">+${h.points}</td>
+        <td class="py-3 text-right text-xs text-on-surface-variant">${h.time}</td>
+      </tr>`).join('');
+
+  // Quote rotation
+  const qEl = document.getElementById('quote-text');
+  qEl.textContent = `"${QUOTES[quoteIdx]}"`;
+}
+
+// Quote rotation
+setInterval(() => {
+  const qEl = document.getElementById('quote-text');
+  if (qEl) {
+    qEl.style.opacity = '0';
+    setTimeout(() => { quoteIdx=(quoteIdx+1)%QUOTES.length; qEl.textContent=`"${QUOTES[quoteIdx]}"`;qEl.style.opacity='1'; }, 500);
+  }
+}, 8000);
+
+// Init
+setTab('kidzone');
+</script>
+</body>
+</html>
+
+
+
+
